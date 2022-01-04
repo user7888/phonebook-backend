@@ -20,34 +20,7 @@ let persons = [
             id: 5
         }
 ]
-
-app.get('/', (req, res) => {
-    res.send('<h1>Hello World!</h1>')
-  })
       
-/*
-    {
-      id: 1,
-      content: "HTML is easy",
-      date: "2020-01-10T17:30:31.098Z",
-      important: true
-    },
-    {
-      id: 2,
-      content: "Browser can execute only Javascript",
-      date: "2020-01-10T18:39:34.091Z",
-      important: false
-    },
-    {
-      id: 3,
-      content: "GET and POST are the most important methods of HTTP protocol",
-      date: "2020-01-10T19:20:14.298Z",
-      important: true
-    }
-  
-]
-*/
-
 // GET JSON data
 app.get('/api/persons', (req, res) => {
     console.log(persons, + 1)
@@ -67,6 +40,65 @@ app.get('/info', (req, res) => {
     console.log(`${dayStr} ${monthStr} ${date.getDate()} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} GMT+0200 (Eastern European Standard Time)`)
 
   })
+
+// GET person
+app.get('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    console.log(id)
+    //const note = notes.find(note => note.id === id)
+    const person = persons.find(person => {
+        console.log(person.id, typeof person.id, id, typeof id, person.id === id)
+        return person.id === id})
+    console.log(person)
+    if (person) {
+        response.json(person)
+    } else {
+        response.status(404).end()
+    }
+  })
+
+// DELETE
+app.delete('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    persons = persons.filter(person => person.id !== id)
+   
+    response.status(204).end()
+  })
+
+// ADD new person
+app.post('/api/persons/', (request, response) => {
+    const body = request.body
+
+/*
+    if (!body.name) {
+        return response.status(400).json({ 
+          error: 'content missing' 
+        })
+    }
+*/
+    
+    // name, number, id
+    const person = {
+       name: body.name,
+       number: body.number,
+       id: generateId()
+    }
+    console.log('tänne päästiin..')
+    console.log(person)
+
+    persons = persons.concat(person)
+    response.json(person)
+    console.log(person)
+    // header print:
+    console.log(request.headers)
+  })
+
+// function for generating a new id
+const generateId = () => {
+    const max = 1000
+    const newId = Math.floor(Math.random() * max)
+    return newId
+  }
 
 const PORT = 3001
 app.listen(PORT, () => {   
