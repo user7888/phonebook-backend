@@ -20,6 +20,10 @@ let persons = [
             id: 5
         }
 ]
+
+app.get('/', (req, res) => {
+    res.send('<h1>Hello World!</h1>')
+  })
       
 /*
     {
@@ -44,8 +48,24 @@ let persons = [
 ]
 */
 
+// GET JSON data
 app.get('/api/persons', (req, res) => {
+    console.log(persons, + 1)
     res.json(persons)
+  })
+
+// GET info page
+app.get('/info', (req, res) => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const date = new Date()
+
+    const monthStr = months[date.getMonth()]
+    const dayStr = days[date.getDay()]
+
+    res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${dayStr} ${monthStr} ${date.getDate()} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} GMT+0200 (Eastern European Standard Time)</p>`)
+    console.log(`${dayStr} ${monthStr} ${date.getDate()} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} GMT+0200 (Eastern European Standard Time)`)
+
   })
 
 const PORT = 3001
