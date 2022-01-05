@@ -1,8 +1,9 @@
 const express = require('express')
+const morgan = require('morgan')
 const app = express()
 app.use(express.json())
+app.use(morgan('tiny'))
 
-// vaihdapuhelinluetteloksi..
 let persons = [
         {
             name: "Ada Lovelace",
@@ -83,8 +84,6 @@ app.post('/api/persons/', (request, response) => {
           })
     }
 
-    
-    // name, number, id
     const person = {
        name: body.name,
        number: body.number,
@@ -99,6 +98,12 @@ app.post('/api/persons/', (request, response) => {
     // header print:
     console.log(request.headers)
   })
+
+// route error handling
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+app.use(unknownEndpoint)
 
 // function for generating a new id
 const generateId = () => {
