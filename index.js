@@ -201,8 +201,8 @@ app.post('/api/persons/', (request, response, next) => {
           .then(savedPerson => {
             console.log('jos tämä näkyy, se saattaa olla bugi')
             // tällä toimi..
-            //response.json(savedPerson)
-            response.json(savedPerson.toJSON())
+            response.json(savedPerson)
+           // response.json(savedPerson.toJSON())
           })
           .catch(error => next(error))
         }
