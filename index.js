@@ -60,8 +60,9 @@ app.get('/api/persons', (req, res) => {
 
 // route for JSON data
 app.get('/api/persons', (request, response) => {
-    Person.find({}).then(persons => {
-      response.json(persons)
+    Person.find({})
+      .then(persons => {
+        response.json(persons)
     })
   })
 
@@ -73,17 +74,29 @@ app.get('/info', (req, res) => {
 
     const monthStr = months[date.getMonth()]
     const dayStr = days[date.getDay()]
-
-    res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${dayStr} ${monthStr} ${date.getDate()} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} GMT+0200 (Eastern European Standard Time)</p>`)
-    console.log(`${dayStr} ${monthStr} ${date.getDate()} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} GMT+0200 (Eastern European Standard Time)`)
-
+  // asynchronous length-method...
+    const collectionLength = Person.count({})
+      .then(persons => {
+        res.send(`<p>Phonebook has info for ${persons} people</p><p>${dayStr} ${monthStr} ${date.getDate()} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} GMT+0200 (Eastern European Standard Time)</p>`)
+        console.log(`phonebook size... ${persons} ${dayStr} ${monthStr} ${date.getDate()} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} GMT+0200 (Eastern European Standard Time)`)
+      })
   })
 
 // Returns a single phonebook entry
-app.get('/api/persons/:id', (request, response) => {
-  Person.findById(request.params.id).then(person => {
-    response.json(person)
-  })
+app.get('/api/persons/:id', (request, response, next) => {
+  Person.findById(request.params.id)
+    .then(person => {
+      if (person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+// jos funktion kutsussa next annetaan parametri, siirtyy
+// käsittely virheidenkäsittelymiddlewarelle (Express).
+
+// funktio ( next ) siirtää virheiden käsittelyn eteenpäin.
+    .catch(error => next(error)) 
 })
 
 /*           old code
@@ -104,15 +117,40 @@ app.get('/api/persons/:id', (request, response) => {
 */
 
 // Deleting a person from phonebook
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-   
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person.findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
   })
 
+
+// Updating the phone number of a existing phonebook entry
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+
+  const updatedPerson = {
+    name: body.name,
+    number: body.number
+  }
+
+  Person.findByIdAndUpdate(request.params.id, updatedPerson, { new: true })
+    .then(personAfterUpdate => {
+      console.log('Dokumentti löytyi ja se päivitettiin')
+      return response.json(personAfterUpdate)
+    })
+    .catch(error => {
+      next(error)
+    })
+})
+
+// Ongelma oli, ettei frontendin tekemälle put-requestille ollut käsittelijää.
+// Post-pyyntönä, joka tehtiin back endistä numeron päivittäminen toimi.
+
+// Löytyykö henkilö puhelinluettelosta, tarkistetaan nyt post pyynnössä.
 // Adding a new person to phonebook
-app.post('/api/persons/', (request, response) => {
+app.post('/api/persons/', (request, response, next) => {
     const body = request.body
 
     if (!body.name || !body.number) {
@@ -129,6 +167,47 @@ app.post('/api/persons/', (request, response) => {
     //      })
     //}
 
+    // mongoose how to check if document exists in collection:
+    Person.exists({name: body.name})
+      .then(result => {
+        console.log('found boolean value is...', result)
+        if (result) {
+          const found = Person.findOne({name: body.name})
+            .then(fetchedObject => {
+              console.log('found variable equals...(should be a document)', fetchedObject)
+              const updatedPerson = {
+                name: body.name,
+                number: body.number
+              }
+              Person.findByIdAndUpdate(fetchedObject.id, updatedPerson, { new: true })
+                .then(personAfterUpdate => {
+                  console.log('Dokumentti löytyi ja se päivitettiin')
+                  return response.json(personAfterUpdate)
+                })
+                .catch(error => {
+                  next(error)
+                })
+            })
+// "Cannot set headers after they are sent to the client" error is usually caused by improper asynchronous code.
+        } else {
+          const person = new Person({
+            name: body.name,
+            number: body.number,
+            id: generateId()
+          })
+         console.log('tänne päästiin..')
+         console.log(person)
+         person.save()
+          .then(savedPerson => {
+            console.log('jos tämä näkyy, se saattaa olla bugi')
+            // tällä toimi..
+            //response.json(savedPerson)
+            response.json(savedPerson.toJSON())
+          })
+          .catch(error => next(error))
+        }
+        })
+/*
     const person = new Person({
        name: body.name,
        number: body.number,
@@ -136,6 +215,7 @@ app.post('/api/persons/', (request, response) => {
     })
     console.log('tänne päästiin..')
     console.log(person)
+*/
 
 /*       old saving functionality
     persons = persons.concat(person)
@@ -144,16 +224,32 @@ app.post('/api/persons/', (request, response) => {
     // header print:
     console.log(request.headers)
 */
-    person.save().then(savedPerson => {
-    response.json(savedPerson)
-})
+/*
+    person.save()
+      .then(savedPerson => {
+        console.log('jos tämä näkyy, se saattaa olla bugi')
+        response.json(savedPerson)
+      })
+*/
   })
 
-// For route error handling
+// For unknown route error handling
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
   }
 app.use(unknownEndpoint)
+
+// Express error handler
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+  next(error)
+}
+app.use(errorHandler)
 
 // Function for generating a new id
 const generateId = () => {
