@@ -167,6 +167,7 @@ app.post('/api/persons/', (request, response, next) => {
     //      })
     //}
 
+/*                      DELETE
     // mongoose how to check if document exists in collection:
     Person.exists({name: body.name})
       .then(result => {
@@ -189,7 +190,7 @@ app.post('/api/persons/', (request, response, next) => {
                 })
             })
 // "Cannot set headers after they are sent to the client" error is usually caused by improper asynchronous code.
-        } else {
+*/
           const person = new Person({
             name: body.name,
             number: body.number,
@@ -205,7 +206,6 @@ app.post('/api/persons/', (request, response, next) => {
            // response.json(savedPerson.toJSON())
           })
           .catch(error => next(error))
-        }
         })
 /*
     const person = new Person({
@@ -231,7 +231,6 @@ app.post('/api/persons/', (request, response, next) => {
         response.json(savedPerson)
       })
 */
-  })
 
 // For unknown route error handling
 const unknownEndpoint = (request, response) => {

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const uniqueValidator = require('mongoose-unique-validator');
 
 const url = process.env.MONGODB_URI
 
@@ -15,14 +16,19 @@ const personSchema = new mongoose.Schema({
     name: {
       type: String,
       minlength: 3,
-      required: true
+      required: true,
+// mongoose-unique-validator
+      unique: true
     },
     number: {
       type: String,
-      minlength: 3,
+      minlength: 8,
       required: true
     }
   })
+// Unique fields validation for mongoose schemas
+uniqueValidator.defaults.message = 'Name must be unique'
+personSchema.plugin(uniqueValidator)
   
   // format objects fetched from database
 personSchema.set('toJSON', {
